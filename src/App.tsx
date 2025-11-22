@@ -10,7 +10,7 @@ import ReactFlow, {
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Terminal, Activity, Router, Network } from 'lucide-react';
+import { X, Terminal, Router, Network } from 'lucide-react';
 import { initialNodes, initialEdges, nodeLogs } from './data';
 
 export default function App() {
@@ -26,16 +26,7 @@ export default function App() {
         <div className="w-screen h-screen bg-background text-white overflow-hidden flex font-mono">
             {/* Main Graph Area */}
             <div className="flex-1 h-full relative">
-                <div className="absolute top-6 left-6 z-10 bg-surface/90 backdrop-blur p-6 rounded-xl border border-gray-700 shadow-2xl">
-                    <h1 className="text-3xl font-bold flex items-center gap-3 text-white tracking-tight">
-                        <Activity className="text-primary animate-pulse" size={32} />
-                        NetOptix
-                    </h1>
-                    <p className="text-sm text-gray-400 mt-2 flex items-center gap-2">
-                        <span className="w-2 h-2 bg-primary rounded-full animate-ping"></span>
-                        Live Topology Visualization
-                    </p>
-                </div>
+                {/* Header Removed as requested */}
 
                 <ReactFlow
                     nodes={nodes}
@@ -44,16 +35,39 @@ export default function App() {
                     onEdgesChange={onEdgesChange}
                     onNodeClick={onNodeClick}
                     fitView
-                    className="bg-background"
+                    className="bg-transparent"
                     defaultEdgeOptions={{
                         type: 'smoothstep',
                         animated: true,
                         style: { strokeWidth: 2 },
-                        markerEnd: { type: MarkerType.ArrowClosed, color: '#666' },
+                        markerEnd: { type: MarkerType.ArrowClosed, color: '#94a3b8' },
                     }}
                 >
-                    <Background color="#333" gap={25} size={1} />
-                    <Controls className="bg-surface border-gray-700 fill-white" />
+                    <Background color="#cbd5e1" gap={30} size={1} />
+                    <Controls className="bg-white border-slate-200 fill-slate-600 rounded-lg shadow-lg" />
+
+                    {/* Flex Algo Legend - Light Mode Card */}
+                    <div className="absolute bottom-8 left-8 bg-white/90 backdrop-blur-sm p-5 rounded-xl border border-slate-200 shadow-xl z-10 w-64">
+                        <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-4 border-b border-slate-100 pb-2">Flex Algo Slicing</h3>
+                        <div className="space-y-3 text-xs font-medium text-slate-600">
+                            <div className="flex items-center justify-between group">
+                                <span>Algo 128 (IGP)</span>
+                                <div className="w-12 h-0.5 bg-emerald-500"></div>
+                            </div>
+                            <div className="flex items-center justify-between group">
+                                <span>Algo 129 (PA-EVPN)</span>
+                                <div className="w-12 h-0.5 bg-blue-500 border-t border-dashed border-blue-500"></div>
+                            </div>
+                            <div className="flex items-center justify-between group">
+                                <span>Algo 130 (AA-EVPN)</span>
+                                <div className="w-12 h-0.5 bg-orange-500 border-t border-dashed border-orange-500"></div>
+                            </div>
+                            <div className="flex items-center justify-between group pt-2 border-t border-slate-100">
+                                <span className="text-slate-800 font-bold">Active Traffic</span>
+                                <div className="w-12 h-1 bg-slate-800 animate-pulse"></div>
+                            </div>
+                        </div>
+                    </div>
                 </ReactFlow>
             </div>
 
