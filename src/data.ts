@@ -7,44 +7,46 @@ const createNode = (id: string, label: string, x: number, y: number, type: 'rout
     data: { label, status, type },
     position: { x, y },
     style: {
-        background: '#ffffff',
-        color: '#1e293b', // Slate 800
-        border: status === 'critical' ? '2px solid #ef4444' : status === 'warning' ? '2px solid #eab308' : '2px solid #cbd5e1', // Slate 300
-        width: type === 'router' ? 64 : 48,
-        height: type === 'router' ? 64 : 48,
+        background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+        color: '#0f172a', // Slate 900
+        border: status === 'critical' ? '3px solid #ef4444' : status === 'warning' ? '3px solid #eab308' : '3px solid #e2e8f0', // Slate 200
+        width: type === 'router' ? 80 : type === 'endpoint' ? 56 : 64,
+        height: type === 'router' ? 80 : type === 'endpoint' ? 56 : 64,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: type === 'router' ? '50%' : '12px',
-        fontSize: '11px',
-        fontWeight: '600',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-        transition: 'all 0.3s ease',
+        borderRadius: type === 'router' ? '50%' : type === 'endpoint' ? '50%' : '16px',
+        fontSize: type === 'router' ? '14px' : '12px',
+        fontWeight: '700',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.5)',
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         cursor: 'pointer',
         zIndex: 10,
+        letterSpacing: '0.025em',
     }
 });
 
 // Topology based on uploaded_image_1_1763811162211.png
+// Positions significantly spread out to fill the viewport
 export const initialNodes: Node[] = [
-    // Core Routers
-    createNode('N1', 'N1', 250, 150, 'router'),
-    createNode('N2', 'N2', 250, 450, 'router'),
-    createNode('N3', 'N3', 450, 100, 'router'),
-    createNode('N4', 'N4', 650, 150, 'router'),
-    createNode('N5', 'N5', 650, 450, 'router'),
-    createNode('N6', 'N6', 850, 150, 'router'),
-    createNode('N7', 'N7', 850, 450, 'router'),
+    // Core Routers - much more spread out
+    createNode('N1', 'N1', 500, 300, 'router'),
+    createNode('N2', 'N2', 500, 900, 'router'),
+    createNode('N3', 'N3', 900, 200, 'router'),
+    createNode('N4', 'N4', 1300, 300, 'router'),
+    createNode('N5', 'N5', 1300, 900, 'router'),
+    createNode('N6', 'N6', 1700, 300, 'router'),
+    createNode('N7', 'N7', 1700, 900, 'router'),
 
     // CE Node (Left Center)
-    createNode('CE', 'CE', 100, 300, 'router'),
+    createNode('CE', 'CE', 200, 600, 'router'),
 
     // Teq Endpoints
-    createNode('Teq9', 'Teq9', -50, 300, 'endpoint'), // Left of CE
-    createNode('Teq1', 'Teq1', 250, 550, 'endpoint'), // Below N2
-    createNode('Teq4', 'Teq4', 650, 50, 'endpoint'),  // Above N4
-    createNode('Teq5', 'Teq5', 650, 550, 'endpoint'), // Below N5
-    createNode('Teq6', 'Teq6', 850, 50, 'endpoint'),  // Above N6
+    createNode('Teq9', 'Teq9', 0, 600, 'endpoint'), // Left of CE
+    createNode('Teq1', 'Teq1', 500, 1100, 'endpoint'), // Below N2
+    createNode('Teq4', 'Teq4', 1300, 100, 'endpoint'),  // Above N4
+    createNode('Teq5', 'Teq5', 1300, 1100, 'endpoint'), // Below N5
+    createNode('Teq6', 'Teq6', 1700, 100, 'endpoint'),  // Above N6
 ];
 
 // Edges with Flex Algo Slicing
@@ -53,8 +55,13 @@ export const initialNodes: Node[] = [
 // Algo 130 (Orange - EVPN AA)
 // Traffic Flow (Dark Slate - Active Path)
 
-const commonEdgeStyle = { strokeWidth: 2, opacity: 0.4 };
-const activeEdgeStyle = { strokeWidth: 3, opacity: 1, stroke: '#1e293b', filter: 'drop-shadow(0 0 2px rgba(0,0,0,0.2))' };
+const commonEdgeStyle = { strokeWidth: 2.5, opacity: 0.5 };
+const activeEdgeStyle = {
+    strokeWidth: 4,
+    opacity: 1,
+    stroke: '#0f172a',
+    filter: 'drop-shadow(0 0 6px rgba(15, 23, 42, 0.4))'
+};
 
 export const initialEdges: Edge[] = [
     // --- Traffic Flow Path (Teq9 -> CE -> N1 -> N5) ---

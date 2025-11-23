@@ -1,13 +1,1005 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NetOptix</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MPLS Traffic Engineering & ISIS Simulation</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #EEF1DE;
+      /* Palette Background */
+      color: #5d5d5d;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    header {
+      width: 100%;
+      padding: 1rem;
+      background-color: #D9E4E0;
+      /* Palette Blue/Gray */
+      border-bottom: 2px solid #C3C7A6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 10px rgba(195, 199, 166, 0.3);
+      z-index: 10;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #7b8064;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    button {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 20px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.9rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .btn-info {
+      background-color: #9ab0d6;
+      /* Soft Blue */
+      color: white;
+    }
+
+    .btn-info:hover {
+      background-color: #839bc4;
+    }
+
+    .btn-peak {
+      background-color: #D7C59F;
+      /* Palette Tan/Brown */
+      color: #fff;
+    }
+
+    .btn-peak:hover {
+      background-color: #c4b087;
+    }
+
+    .btn-peak.active {
+      background-color: #bfa77a;
+      border: 2px solid #D7C59F;
+      box-shadow: 0 0 15px #D7C59F;
+      animation: pulse-tan 1s infinite;
+    }
+
+    .btn-toggle {
+      background-color: #C3C7A6;
+      /* Palette Green */
+      color: white;
+    }
+
+    .btn-toggle:hover {
+      background-color: #aeb38b;
+    }
+
+    #canvas-container {
+      position: relative;
+      flex-grow: 1;
+      width: 100%;
+      overflow: hidden;
+      background: #EEF1DE;
+    }
+
+    canvas {
+      display: block;
+    }
+
+    /* Updated Legend CSS for dragging */
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(236, 233, 190, 0.95);
+      padding: 1rem;
+      border-radius: 12px;
+      border: 1px solid #C3C7A6;
+      font-size: 0.85rem;
+      color: #5d5d5d;
+      box-shadow: 0 4px 15px rgba(195, 199, 166, 0.2);
+      z-index: 5;
+      cursor: grab;
+      user-select: none;
+    }
+
+    .legend:active {
+      cursor: grabbing;
+    }
+
+    .legend-header {
+      font-weight: bold;
+      margin-bottom: 8px;
+      color: #7b8064;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    /* Stats Panel CSS */
+    .info-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(236, 233, 190, 0.95);
+      padding: 1rem;
+      border-radius: 12px;
+      border: 1px solid #C3C7A6;
+      width: 280px;
+      color: #5d5d5d;
+      box-shadow: 0 4px 15px rgba(195, 199, 166, 0.2);
+      cursor: grab;
+      user-select: none;
+      z-index: 100;
+    }
+
+    .info-panel:active {
+      cursor: grabbing;
+    }
+
+    .metric {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid #D9E4E0;
+      padding-bottom: 0.25rem;
+    }
+
+    /* Config Modal CSS */
+    .config-modal {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      background: #fff;
+      border: 1px solid #C3C7A6;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      overflow: hidden;
+      font-family: 'Consolas', 'Monaco', monospace;
+    }
+
+    .config-header {
+      background: #D9E4E0;
+      padding: 10px 15px;
+      border-bottom: 1px solid #C3C7A6;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Segoe UI', sans-serif;
+      font-weight: bold;
+      color: #5d5d5d;
+    }
+
+    .close-config {
+      cursor: pointer;
+      font-size: 1.2rem;
+      color: #888;
+    }
+
+    .close-config:hover {
+      color: #555;
+    }
+
+    .config-body {
+      padding: 15px;
+      max-height: 400px;
+      overflow-y: auto;
+      background: #fdfdfd;
+      color: #333;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    /* Table Styles for Info Modal */
+    .info-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 15px;
+      font-family: 'Segoe UI', sans-serif;
+      font-size: 0.85rem;
+      color: #555;
+    }
+
+    .info-table th,
+    .info-table td {
+      border: 1px solid #C3C7A6;
+      padding: 8px;
+      text-align: left;
+    }
+
+    .info-table th {
+      background-color: #E9ECCF;
+      color: #7b8064;
+      font-weight: 600;
+    }
+
+    .info-table tr:nth-child(even) {
+      background-color: #f9fdf5;
+    }
+
+    .section-title {
+      font-weight: bold;
+      color: #7b8064;
+      margin-bottom: 5px;
+      margin-top: 15px;
+      border-bottom: 2px solid #D7C59F;
+      display: inline-block;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    .section-title:first-child {
+      margin-top: 0;
+    }
+
+    .keyword {
+      color: #0000ff;
+    }
+
+    .string {
+      color: #a31515;
+    }
+
+    .comment {
+      color: #008000;
+    }
+
+    .val {
+      color: #098658;
+    }
+
+    @keyframes pulse-tan {
+      0% {
+        box-shadow: 0 0 0 0 rgba(215, 197, 159, 0.7);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(215, 197, 159, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(215, 197, 159, 0);
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div>
+      <h1>MPLS Traffic Engineering Simulation</h1>
+      <small style="color: #888">ISIS Multi-Level | Flex Algo | SRLG Aware</small>
+    </div>
+    <div class="controls">
+      <button class="btn-info" onclick="openNetworkInfo()">ℹ️ Network Info</button>
+      <button class="btn-toggle" onclick="toggleTraffic()">Pause Traffic</button>
+      <button class="btn-peak" id="peakBtn" onclick="togglePeakHour()">Simulate Peak Hour</button>
+    </div>
+  </header>
+
+  <div id="canvas-container">
+    <canvas id="networkCanvas"></canvas>
+
+    <!-- Draggable Stats Panel -->
+    <div class="info-panel" id="draggablePanel">
+      <div
+        style="font-weight: bold; margin-bottom: 10px; color: #7b8064; display: flex; justify-content: space-between; align-items: center;">
+        <span>Link Stats: CE ↔ N1</span>
+        <span style="font-size: 12px; opacity: 0.5;">✥</span>
+      </div>
+      <div class="metric">
+        <span>Status:</span>
+        <span id="link-status" style="font-weight:bold;">Healthy</span>
+      </div>
+      <div class="metric">
+        <span>Active Packets:</span>
+        <span id="link-load">0</span>
+      </div>
+      <div class="metric">
+        <span>Link Utilization:</span>
+        <span id="link-util">0%</span>
+      </div>
+      <div class="metric">
+        <span>Latency:</span>
+        <span id="link-latency">2ms</span>
+      </div>
+    </div>
+
+    <!-- Draggable Legend -->
+    <div class="legend" id="draggableLegend">
+      <div class="legend-header">
+        <span>Legend</span>
+        <span style="font-size: 12px; opacity: 0.5;">✥</span>
+      </div>
+      <div class="legend-item">
+        <div class="dot" style="background: #9ab0d6;"></div>Standard Traffic (Best Path)
+      </div>
+      <div class="legend-item">
+        <div class="dot" style="background: #D7C59F;"></div>Flex Algo 130 (Priority)
+      </div>
+      <div class="legend-item">
+        <div class="dot" style="background: #F1F0C8; border: 1px solid #bbb;"></div>Access Traffic (TEQ9-CE)
+      </div>
+      <div style="margin-top:8px; border-top: 1px solid #C3C7A6; padding-top:5px;">
+        <div class="legend-item"><span
+            style="border-bottom: 4px solid #D7C59F; width: 20px; display:inline-block; margin-right:8px;"></span>Congested
+          Link</div>
+      </div>
+      <div style="margin-top:5px; font-size: 0.75rem; color: #888; font-style:italic;">
+        * Right-click Core nodes for config
+      </div>
+    </div>
+
+    <!-- Network Info Modal -->
+    <div class="config-modal" id="networkInfoModal" style="width: 750px;">
+      <div class="config-header">
+        <span>Network Topology & Flex Algo Guide</span>
+        <span class="close-config" onclick="closeNetworkInfo()">×</span>
+      </div>
+      <div class="config-body" style="font-family: 'Segoe UI', sans-serif;">
+
+        <div class="section-title">Flex Algorithms (Traffic Colors)</div>
+        <table class="info-table">
+          <thead>
+            <tr>
+              <th style="width: 60px;">Algo</th>
+              <th style="width: 80px;">Color</th>
+              <th>Constraint / Purpose</th>
+              <th>Simulation Path</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>128</strong></td>
+              <td><span class="dot" style="background:#9ab0d6; display:inline-block; vertical-align:middle;"></span>Blue
+              </td>
+              <td><strong>SPF (Metric)</strong>: Standard IGP Cost</td>
+              <td>CE &rarr; N2 &rarr; N5 &rarr; N7</td>
+            </tr>
+            <tr>
+              <td><strong>129</strong></td>
+              <td><span class="dot"
+                  style="background:#C3C7A6; display:inline-block; vertical-align:middle;"></span>Green</td>
+              <td><strong>Low Delay</strong>: Latency Sensitive</td>
+              <td>CE &rarr; N1 &rarr; N5 &rarr; N6</td>
+            </tr>
+            <tr>
+              <td><strong>130</strong></td>
+              <td><span class="dot" style="background:#D7C59F; display:inline-block; vertical-align:middle;"></span>Tan
+              </td>
+              <td><strong>Affinity</strong>: Explicit Path (Admin Group)</td>
+              <td>N1 &rarr; N3 &rarr; N5 &rarr; N6</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="section-title">Topology & Link Details</div>
+        <table class="info-table">
+          <thead>
+            <tr>
+              <th>Link / Segment</th>
+              <th>IP Prefix</th>
+              <th>Metric</th>
+              <th>Attributes (SRLG/Admin)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>CE &harr; N1</strong></td>
+              <td>11.1.1.0/30</td>
+              <td>20</td>
+              <td style="color:#D7C59F; font-weight:bold;">Bottleneck Link (Simulated)</td>
+            </tr>
+            <tr>
+              <td>N1 &harr; N2</td>
+              <td>12.12.12.0/24</td>
+              <td>10</td>
+              <td>SRLG: 4 | AD: 2, 5, 3</td>
+            </tr>
+            <tr>
+              <td>N1 &harr; N3 (LAG)</td>
+              <td>13.13.13.0/30</td>
+              <td>20</td>
+              <td>SRLG: 5 | AD: 1, 2</td>
+            </tr>
+            <tr>
+              <td>N4 &harr; N6</td>
+              <td>46.46.46.0/31</td>
+              <td>20</td>
+              <td>SRLG: 14,15 | AD: 11,12,13</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="section-title">Node Roles</div>
+        <table class="info-table">
+          <thead>
+            <tr>
+              <th>Router Role</th>
+              <th>Nodes</th>
+              <th>Function</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Core (L2)</strong></td>
+              <td>N1, N2, N3</td>
+              <td>Backbone Mesh (ISIS Level 2)</td>
+            </tr>
+            <tr>
+              <td><strong>ABR</strong></td>
+              <td>N4, N5</td>
+              <td>Area Border Routers (L1/L2 Leaking)</td>
+            </tr>
+            <tr>
+              <td><strong>Agg (L1)</strong></td>
+              <td>N6, N7</td>
+              <td>Aggregation Layer (ISIS Level 1)</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+    </div>
+
+    <!-- Configuration Modal -->
+    <div class="config-modal" id="configModal">
+      <div class="config-header">
+        <span id="configTitle">Router Configuration</span>
+        <span class="close-config" onclick="closeConfig()">×</span>
+      </div>
+      <div class="config-body" id="configContent"></div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('networkCanvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('canvas-container');
+
+    // --- Generic Drag Functionality ---
+    function makeDraggable(el) {
+      let isDragging = false;
+      let startX, startY, initialLeft, initialTop;
+
+      el.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+
+        const rect = el.getBoundingClientRect();
+        initialLeft = el.offsetLeft;
+        initialTop = el.offsetTop;
+
+        el.style.right = 'auto';
+        el.style.bottom = 'auto';
+        el.style.left = initialLeft + 'px';
+        el.style.top = initialTop + 'px';
+
+        el.style.cursor = 'grabbing';
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        e.preventDefault();
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        el.style.left = `${initialLeft + dx}px`;
+        el.style.top = `${initialTop + dy}px`;
+      });
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+        el.style.cursor = 'grab';
+      });
+    }
+
+    makeDraggable(document.getElementById('draggablePanel'));
+    makeDraggable(document.getElementById('draggableLegend'));
+    makeDraggable(document.getElementById('configModal'));
+    makeDraggable(document.getElementById('networkInfoModal'));
+
+    let width, height;
+    let animationId;
+    let isPeakHour = false;
+    let trafficPaused = false;
+    let selectedNode = null;
+
+    const baseNodes = {
+      'Teq9': { x: 0.05, y: 0.5, type: 'ce' },
+      'CE': { x: 0.15, y: 0.5, type: 'core', role: 'L2' },
+      'N1': { x: 0.30, y: 0.35, type: 'core', role: 'L2' },
+      'N2': { x: 0.30, y: 0.65, type: 'core', role: 'L2' },
+      'N3': { x: 0.45, y: 0.25, type: 'core', role: 'L2' },
+      'N4': { x: 0.60, y: 0.35, type: 'abr', role: 'ABR' },
+      'N5': { x: 0.60, y: 0.65, type: 'abr', role: 'ABR' },
+      'N6': { x: 0.80, y: 0.35, type: 'core', role: 'L1' },
+      'N7': { x: 0.80, y: 0.65, type: 'core', role: 'L1' },
+      'Teq1': { x: 0.30, y: 0.80, type: 'leaf' },
+      'Teq4': { x: 0.60, y: 0.15, type: 'leaf' },
+      'Teq5': { x: 0.60, y: 0.85, type: 'leaf' },
+      'Teq6': { x: 0.90, y: 0.20, type: 'leaf' }
+    };
+
+    const nodes = {};
+
+    // Added network details: IP prefixes, AD (Admin Group), SRLG
+    const links = [
+      { s: 'Teq9', t: 'CE', capacity: 50, load: 0, metric: 10 },
+      { s: 'CE', t: 'N1', capacity: 6, load: 0, id: 'bottleneck', metric: 20, ip: '11.1.1.0/30', ad: [1, 3], srlg: [4, 5] },
+      { s: 'CE', t: 'N2', capacity: 20, load: 0, metric: 20, ip: '11.2.2.0/30', ad: [1, 3], srlg: [4, 5] },
+      { s: 'N1', t: 'N2', capacity: 20, load: 0, metric: 10, ip: '12.12.12.0/24', ad: [2, 5, 3], srlg: 4 },
+      { s: 'N1', t: 'N3', capacity: 20, load: 0, dashed: true, metric: 20, ip: '13.13.13.0/30', ad: [1, 2], srlg: 5 },
+      { s: 'N1', t: 'N5', capacity: 20, load: 0, metric: 30, ip: '15.15.15.0/24', ad: [1, 2], srlg: 5 },
+      { s: 'N2', t: 'N3', capacity: 20, load: 0, metric: 30, ip: '23.23.23.0/30' },
+      { s: 'N2', t: 'N5', capacity: 20, load: 0, metric: 20, ip: '25.25.25.0/31', ad: [1, 2, 3], srlg: 4 },
+      { s: 'N3', t: 'N4', capacity: 20, load: 0, metric: 10, ip: '34.34.34.0/30' },
+      { s: 'N3', t: 'N5', capacity: 20, load: 0, metric: 10, ip: '35.35.35.0/30' },
+      { s: 'N4', t: 'N5', capacity: 20, load: 0, metric: 10, ip: '45.45.45.0/24' },
+      { s: 'N4', t: 'N6', capacity: 20, load: 0, metric: 20, ip: '46.46.46.0/31', ad: [11, 12, 13], srlg: [14, 15] },
+      { s: 'N5', t: 'N6', capacity: 20, load: 0, metric: 20, ip: '56.56.56.0/24', ad: [11, 12, 13], srlg: [14, 15] },
+      { s: 'N5', t: 'N7', capacity: 20, load: 0, metric: 20, ip: '57.57.57.0/30', ad: [11, 12, 13], srlg: [14, 15] },
+      { s: 'N6', t: 'N7', capacity: 20, load: 0, metric: 10, ip: '67.67.67.0/24', ad: [11, 12, 13], srlg: [14, 15] },
+
+      // Leaf connections
+      { s: 'N2', t: 'Teq1', capacity: 20, load: 0 },
+      { s: 'N4', t: 'Teq4', capacity: 20, load: 0 },
+      { s: 'N5', t: 'Teq5', capacity: 20, load: 0 },
+      { s: 'N6', t: 'Teq6', capacity: 20, load: 0 }
+    ];
+
+    const paths = {
+      'red': ['N1', 'N3', 'N5', 'N6'],
+      'shortest': ['CE', 'N1', 'N5', 'N6'],
+      'access': ['Teq9', 'CE']
+    };
+
+    let packets = [];
+
+    function resize() {
+      width = container.clientWidth;
+      height = container.clientHeight;
+      canvas.width = width;
+      canvas.height = height;
+
+      for (let id in baseNodes) {
+        nodes[id] = {
+          x: baseNodes[id].x * width,
+          y: baseNodes[id].y * height,
+          type: baseNodes[id].type,
+          role: baseNodes[id].role,
+          id: id
+        };
+      }
+    }
+
+    // --- Context Menu Logic ---
+    canvas.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Find clicked node
+      let clickedNode = null;
+      for (let id in nodes) {
+        const n = nodes[id];
+        const dist = Math.sqrt((mouseX - n.x) ** 2 + (mouseY - n.y) ** 2);
+        if (dist < 25) { // Hit radius
+          clickedNode = n;
+          break;
+        }
+      }
+
+      if (clickedNode) {
+        if (clickedNode.type === 'leaf') {
+          // Do nothing for TEQ/Leaf nodes as requested
+          return;
+        }
+        showConfig(clickedNode);
+      }
+    });
+
+    function showConfig(node) {
+      selectedNode = node;
+      const modal = document.getElementById('configModal');
+      const title = document.getElementById('configTitle');
+      const content = document.getElementById('configContent');
+
+      title.innerText = `Configuration: ${node.id} (${node.role})`;
+      content.innerHTML = generateConfigText(node);
+
+      modal.style.display = 'block';
+
+      // Re-draw to show highlighting
+      drawTopology();
+    }
+
+    function closeConfig() {
+      document.getElementById('configModal').style.display = 'none';
+      selectedNode = null;
+      drawTopology();
+    }
+
+    // --- Network Info Modal Logic ---
+    function openNetworkInfo() {
+      const modal = document.getElementById('networkInfoModal');
+      modal.style.display = 'block';
+      // Center it only if it hasn't been dragged (no manual left style)
+      if (!modal.style.left) {
+        modal.style.top = '50%';
+        modal.style.left = '50%';
+        modal.style.transform = 'translate(-50%, -50%)';
+      }
+    }
+
+    function closeNetworkInfo() {
+      document.getElementById('networkInfoModal').style.display = 'none';
+    }
+
+    function generateConfigText(node) {
+      const systemIdMap = {
+        'N1': '1111.1111.1111', 'N2': '2222.2222.2222', 'N3': '3333.3333.3333',
+        'N4': '4444.4444.4444', 'N5': '5555.5555.5555', 'N6': '6666.6666.6666',
+        'N7': '7777.7777.7777', 'CE': '9999.9999.9999'
+      };
+      const loopbackIp = node.id.replace('N', '') + '.' + node.id.replace('N', '') + '.' + node.id.replace('N', '') + '.' + node.id.replace('N', '');
+
+      let config = `<span class="comment">! Configuration based on ${node.id}</span>\n`;
+      config += `set system ne-id ${node.id === 'CE' ? '9999' : node.id.replace('N', '100')}\n`;
+      config += `set system login user admin class super-user\n`;
+      config += `set system syslog file kernel.log kernel any\n`;
+
+      // Interfaces Block
+      const nodeLinks = links.filter(l => l.s === node.id || l.t === node.id);
+      nodeLinks.forEach((l, idx) => {
+        const neighbor = l.s === node.id ? l.t : l.s;
+        // Skip if neighbor is a leaf/TEQ unless it's critical
+        if (neighbor.startsWith('Teq')) return;
+
+        const intfName = `ge-ts11/${idx + 1}`;
+
+        config += `\n<span class="comment">! Link to ${neighbor}</span>\n`;
+        config += `set interfaces ${intfName} type vlan-tagged\n`;
+
+        if (l.ip) {
+          const ipBase = l.ip.split('/')[0];
+          const mask = l.ip.split('/')[1] === '30' ? '255.255.255.252' : (l.ip.split('/')[1] === '31' ? '255.255.255.254' : '255.255.255.0');
+          const octets = ipBase.split('.');
+          octets[3] = (l.s === node.id) ? parseInt(octets[3]) + 1 : parseInt(octets[3]) + 2;
+          config += `set interfaces ${intfName} unit 1 family inet address <span class="val">${octets.join('.')}/${mask}</span>\n`;
+        } else {
+          config += `set interfaces ${intfName} unit 1 family inet address <span class="val">10.0.${node.id.replace('N', '')}.${idx + 1}/24</span>\n`;
+        }
+
+        config += `set interfaces ${intfName} unit 1 family mpls\n`;
+        config += `set interfaces ${intfName} unit 1 family iso\n`;
+        config += `set interfaces ${intfName} unit 1 vlan-id-list 1\n`;
+
+        // MPLS Performance Measurement
+        config += `set protocols mpls performance-measurement delay-measurement interface ${intfName}.1 enable\n`;
+        config += `set protocols mpls performance-measurement delay-measurement interface ${intfName}.1 advertise-delay ${l.metric ? l.metric * 10 : 100}\n`;
+      });
+
+      // Loopback
+      config += `\nset interfaces lo0 unit 0 family inet address <span class="val">${loopbackIp}/32</span>\n`;
+      config += `set interfaces lo0 unit 0 family iso\n`;
+
+      // ISIS Protocol Block
+      config += `\n<span class="comment">! ISIS Configuration</span>\n`;
+      config += `set protocols isis protocol-instance 0 enable\n`;
+      config += `set protocols isis protocol-instance 0 system-id-host-name ${node.id}\n`;
+
+      // Flex Algo Advertise
+      config += `set protocols isis protocol-instance 0 segment-routing flex-algo 140 advertise FAD_IGP_140\n`;
+      config += `set protocols isis protocol-instance 0 segment-routing flex-algo 141 advertise FAD_TE_141\n`;
+      config += `set protocols isis protocol-instance 0 segment-routing flex-algo 142 advertise FAD_DELAY_142\n`;
+      config += `set protocols isis protocol-instance 0 traffic-engineering advertise-asla flex-algo\n`;
+
+      // Interface Specific ISIS
+      nodeLinks.forEach((l, idx) => {
+        const neighbor = l.s === node.id ? l.t : l.s;
+        if (neighbor.startsWith('Teq')) return;
+        const intfName = `ge-ts11/${idx + 1}`;
+
+        config += `set protocols isis protocol-instance 0 interface ${intfName}.1 emulate-ptp\n`;
+        config += `set protocols isis protocol-instance 0 interface ${intfName}.1 level-type L2\n`;
+        if (l.metric) {
+          config += `set protocols isis protocol-instance 0 interface ${intfName}.1 level 2 metric <span class="val">${l.metric}</span>\n`;
+          config += `set protocols isis protocol-instance 0 interface ${intfName}.1 level 2 te-metric <span class="val">${l.metric}</span>\n`;
+        }
+      });
+
+      // General ISIS Settings
+      config += `set protocols isis protocol-instance 0 interface lo0.0 passive\n`;
+      config += `set protocols isis protocol-instance 0 interface lo0.0 level-type L2\n`;
+      config += `set protocols isis protocol-instance 0 iso-addressing area-address 34.0010\n`;
+      config += `set protocols isis protocol-instance 0 iso-addressing system-id ${systemIdMap[node.id] || '0000.0000.0000'}\n`;
+      config += `set protocols isis protocol-instance 0 fast-reroute-options enable\n`;
+      config += `set protocols isis protocol-instance 0 fast-reroute-options ti-lfa\n`;
+      config += `set protocols isis protocol-instance 0 level-type L2\n`;
+
+      // Segment Routing Flex Algo Definitions
+      config += `\n<span class="comment">! Flex Algo Definitions</span>\n`;
+      config += `set protocols segment-routing flex-algo FAD_DELAY_142 metric-type Delay\n`;
+      config += `set protocols segment-routing flex-algo FAD_IGP_140 metric-type IGP\n`;
+      config += `set protocols segment-routing flex-algo FAD_TE_141 metric-type TE\n`;
+      config += `set protocols segment-routing ipv4-adj-segment-mode both\n`;
+
+      return config;
+    }
+
+    class Packet {
+      constructor(pathKeys, type, color, speed = 2) {
+        this.pathKeys = pathKeys;
+        this.currentLinkIndex = 0;
+        this.progress = 0;
+        this.baseSpeed = speed;
+        this.color = color;
+        this.finished = false;
+        this.jitter = Math.random() * 0.5 + 0.8;
+        this.currentLink = null;
+      }
+
+      update() {
+        if (this.finished) return;
+
+        const startNodeId = this.pathKeys[this.currentLinkIndex];
+        const endNodeId = this.pathKeys[this.currentLinkIndex + 1];
+
+        this.currentLink = links.find(l =>
+          (l.s === startNodeId && l.t === endNodeId) ||
+          (l.s === endNodeId && l.t === startNodeId)
+        );
+
+        if (this.currentLink) {
+          this.currentLink.load++;
+        }
+
+        let congestionFactor = 1;
+        if (this.currentLink && this.currentLink.load > this.currentLink.capacity) {
+          let overload = this.currentLink.load / this.currentLink.capacity;
+          congestionFactor = 1 / (overload * 3);
+        }
+
+        let currentSpeed = this.baseSpeed * this.jitter * congestionFactor;
+
+        const startNode = nodes[startNodeId];
+        const endNode = nodes[endNodeId];
+        const dx = endNode.x - startNode.x;
+        const dy = endNode.y - startNode.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        this.progress += currentSpeed / distance;
+
+        if (this.progress >= 1) {
+          this.progress = 0;
+          this.currentLinkIndex++;
+          if (this.currentLinkIndex >= this.pathKeys.length - 1) {
+            this.finished = true;
+          }
+        }
+      }
+
+      draw() {
+        if (this.finished) return;
+        const startNode = nodes[this.pathKeys[this.currentLinkIndex]];
+        const endNode = nodes[this.pathKeys[this.currentLinkIndex + 1]];
+
+        const x = startNode.x + (endNode.x - startNode.x) * this.progress;
+        const y = startNode.y + (endNode.y - startNode.y) * this.progress;
+
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+      }
+    }
+
+    function spawnTraffic() {
+      if (trafficPaused) return;
+
+      let spawnRateMultiplier = isPeakHour ? 4.0 : 1.0;
+
+      if (Math.random() < 0.02 * spawnRateMultiplier) {
+        packets.push(new Packet(paths['shortest'], 'shortest', '#9ab0d6', 2.8));
+      }
+      if (Math.random() < 0.04 * spawnRateMultiplier) {
+        let p = isPeakHour ? ['Teq9', 'CE', 'N1', 'N5'] : ['Teq9', 'CE'];
+        packets.push(new Packet(p, 'access', '#F1F0C8', 2.5));
+      }
+      if (Math.random() < 0.03) {
+        packets.push(new Packet(paths['red'], 'red', '#D7C59F', 3));
+      }
+    }
+
+    function drawTopology() {
+      ctx.clearRect(0, 0, width, height);
+      links.forEach(l => l.load = 0);
+
+      // Draw ISIS Areas Background
+      ctx.beginPath();
+      ctx.moveTo(width * 0.55, 0);
+      ctx.lineTo(width * 0.55, height);
+      ctx.lineTo(width, height);
+      ctx.lineTo(width, 0);
+      ctx.fillStyle = '#E9ECCF';
+      ctx.globalAlpha = 0.4;
+      ctx.fill();
+      ctx.globalAlpha = 1.0;
+
+      ctx.font = '14px sans-serif';
+      ctx.fillStyle = '#C3C7A6';
+      ctx.fillText("ISIS Level 2 Area", width * 0.2, height * 0.1);
+      ctx.fillText("ISIS Level 1 Area", width * 0.75, height * 0.1);
+
+      // Draw Links
+      links.forEach(link => {
+        const s = nodes[link.s];
+        const t = nodes[link.t];
+
+        ctx.beginPath();
+        ctx.moveTo(s.x, s.y);
+        ctx.lineTo(t.x, t.y);
+
+        let utilization = link.load / link.capacity;
+        if (utilization > 1.0) {
+          ctx.strokeStyle = '#D7C59F';
+          ctx.lineWidth = 4 + (utilization * 1.5);
+          ctx.shadowColor = '#D7C59F';
+          ctx.shadowBlur = 10;
+        } else {
+          ctx.strokeStyle = '#C3C7A6';
+          ctx.lineWidth = 2;
+          ctx.shadowBlur = 0;
+        }
+
+        if (link.dashed) ctx.setLineDash([5, 5]);
+        else ctx.setLineDash([]);
+
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.shadowBlur = 0;
+      });
+
+      // Draw Nodes
+      for (let id in nodes) {
+        const n = nodes[id];
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, n.type === 'leaf' ? 12 : 20, 0, Math.PI * 2);
+
+        // Highlight selected
+        if (selectedNode && selectedNode.id === id) {
+          ctx.shadowColor = '#7b8064';
+          ctx.shadowBlur = 15;
+        } else {
+          ctx.shadowBlur = 0;
+        }
+
+        if (id === 'CE') ctx.fillStyle = '#fff';
+        else if (n.type === 'leaf') ctx.fillStyle = '#F1F0C8';
+        else ctx.fillStyle = '#E9ECCF';
+
+        ctx.lineWidth = 2;
+        if (id === 'CE') ctx.strokeStyle = '#D7C59F';
+        else ctx.strokeStyle = '#C3C7A6';
+
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#5d5d5d';
+        ctx.font = n.type === 'leaf' ? 'bold 10px Arial' : 'bold 12px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(id, n.x, n.y);
+      }
+      ctx.shadowBlur = 0;
+    }
+
+    function animate() {
+      spawnTraffic();
+
+      links.forEach(l => l.load = 0);
+
+      for (let i = packets.length - 1; i >= 0; i--) {
+        packets[i].update();
+        if (packets[i].finished) {
+          packets.splice(i, 1);
+        }
+      }
+
+      drawTopology();
+      packets.forEach(p => p.draw());
+
+      updateStats();
+      animationId = requestAnimationFrame(animate);
+    }
+
+    function updateStats() {
+      const monitoredLink = links.find(l => l.s === 'CE' && l.t === 'N1');
+
+      if (monitoredLink) {
+        const util = (monitoredLink.load / monitoredLink.capacity) * 100;
+        const isOverloaded = util > 100;
+
+        document.getElementById('link-load').innerText = monitoredLink.load;
+        document.getElementById('link-util').innerText = util.toFixed(0) + "%";
+
+        const statusEl = document.getElementById('link-status');
+        const latencyEl = document.getElementById('link-latency');
+
+        if (isOverloaded) {
+          statusEl.innerText = "CONGESTED";
+          statusEl.style.color = "#D7C59F";
+          latencyEl.innerText = (20 + (util * 2)).toFixed(0) + "ms";
+        } else {
+          statusEl.innerText = "Healthy";
+          statusEl.style.color = "#829f73";
+          latencyEl.innerText = "2ms";
+        }
+      }
+    }
+
+    function togglePeakHour() {
+      isPeakHour = !isPeakHour;
+      const btn = document.getElementById('peakBtn');
+      if (isPeakHour) {
+        btn.classList.add('active');
+        btn.innerText = "Stop Peak Hour";
+      } else {
+        btn.classList.remove('active');
+        btn.innerText = "Simulate Peak Hour";
+      }
+    }
+
+    function toggleTraffic() {
+      trafficPaused = !trafficPaused;
+      document.querySelector('.btn-toggle').innerText = trafficPaused ? "Resume Traffic" : "Pause Traffic";
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+    animate();
+
+  </script>
+</body>
+
 </html>
